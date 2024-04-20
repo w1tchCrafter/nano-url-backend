@@ -1,8 +1,5 @@
-import { createHash } from "crypto";
+import { nanoid } from "nanoid";
 
-export default function createLink(input) {
-    const hash = createHash("sha256").update(input).digest();
-    const base64 = Buffer.from(hash, "utf-8").toString("base64");
-
-    return base64.slice(0, 4).toString();
+export default function createLink() {
+    return nanoid(5);
 }

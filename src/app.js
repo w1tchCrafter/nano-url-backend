@@ -31,7 +31,7 @@ app.post("/shorten", async (req, res) => {
     // definitily not optimal
     // doing this to ensure there's no repeated shortened links
     while (exists !== null) {
-        let shortened = createLink(original);
+        let shortened = createLink();
         exists = await linkModel.find({ shortened });
     }
 

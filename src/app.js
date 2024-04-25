@@ -2,17 +2,19 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import linkModel from "./linkModel.js";
-import { createLink, isReachable } from "./shortener.js";
+import { createLink, isReachable, setCookieValue, deleteCookieValue } from "./shortener.js";
 
 const app = express();
 app.use(express.json());
 app.use(helmet());
 app.use(cors());
 app.use(morgan("combined"));
+app.use(cookieParser());
 
-app.get("/:link", (req, res) => {
-    const shortened = req.params.link;
+app.get("/:shortened", (req, res) => {
+    const { shortened } = req.params;
     const whitelist = /^[A-Za-z0-9_-]+$/;
 
     if (!whitelist.test(shortened)) {
@@ -33,7 +35,7 @@ app.get("/:link", (req, res) => {
 });
 
 app.post("/shorten", (req, res) => {
-    const { original } = req.body;
+    const { original, cookie } = req.body;
 
     linkModel.findOne({ original })
         .then(async doc => {
@@ -51,12 +53,15 @@ app.post("/shorten", (req, res) => {
                     let newLink = new linkModel({ original, shortened, isSafe: true, users: 1 });
 
                     await newLink.save();
+                    if (cookie) setCookieValue(req, res, {original, shortened});
                     res.json(newLink);
                 } catch(err) {
                     res.status(500).json({"error": err});
                     console.error(err);
                 }
             } else {
+                let { shortened } = doc;
+                if (cookie) setCookieValue(req, res, {original, shortened});
                 res.status(200).json(doc);
                 res.end();
             }
@@ -67,6 +72,10 @@ app.post("/shorten", (req, res) => {
         });
 });
 
-app.post("/delete", (req, res) => {});
+
+app.post("/delete", (req, res) => {
+    const { shortened } = req.body;
+    deleteCookieValue(req, res, shortened);
+});
 
 export default app;

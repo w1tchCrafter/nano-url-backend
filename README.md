@@ -88,7 +88,7 @@ true`, a cookie called "nano-url" will be set to indicate all user saved links.
 - **Request Body:**
   ```json
   {
-    "shortened": "https://nano-url.com/Z5R8"
+    "shortened": "VZ5R8"
   }
   ```
 - **Response:**

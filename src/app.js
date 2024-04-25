@@ -13,7 +13,13 @@ app.use(morgan("combined"));
 
 app.get("/:link", (req, res) => {
     const shortened = req.params.link;
+    const whitelist = /^[A-Za-z0-9_-]+$/;
 
+    if (!whitelist.test(shortened)) {
+        res.status(400).json({"error":"bad request"});
+        return;
+    }
+    
     linkModel.findOne({ shortened })
         .then(doc => {
             if (doc) res.redirect(doc.original);
@@ -44,7 +50,7 @@ app.post("/shorten", (req, res) => {
                     let shortened = createLink();
                     let newLink = new linkModel({ original, shortened, isSafe: true, users: 1 });
 
-                    newLink.save();
+                    await newLink.save();
                     res.json(newLink);
                 } catch(err) {
                     res.status(500).json({"error": err});

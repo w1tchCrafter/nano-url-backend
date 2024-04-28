@@ -4,11 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import linkModel from "./linkModel.js";
-import {
-  createLink,
-  deleteCookieValue,
-  isReachable,
-} from "./shortener.js";
+import { createLink, isReachable } from "./shortener.js";
 
 const app = express();
 app.use(express.json());
@@ -22,33 +18,35 @@ app.get("/:shortened", (req, res) => {
   const whitelist = /^[A-Za-z0-9_-]+$/;
 
   if (!whitelist.test(shortened)) {
-    res.status(400).json({ "error": "bad request" });
+    res.status(400).json({ error: "bad request" });
     return;
   }
 
-  linkModel.findOne({ shortened })
+  linkModel
+    .findOne({ shortened })
     .then((doc) => {
       if (doc) res.redirect(doc.original);
-      else res.status(404).json({ "error": "not found" });
+      else res.status(404).json({ error: "not found" });
     })
     .catch((err) => {
-      res.status(500).json({ "error": "server error" });
+      res.status(500).json({ error: "server error" });
       res.end();
       console.error(err);
     });
 });
 
 app.post("/shorten", (req, res) => {
-  const { original, cookie } = req.body;
+  const { original } = req.body;
 
-  linkModel.findOne({ original })
+  linkModel
+    .findOne({ original })
     .then(async (doc) => {
       if (!doc) {
         try {
           let isvalid = await isReachable(original);
 
           if (!isvalid) {
-            res.status(400).json({ "error": "host is unreachable" });
+            res.status(400).json({ error: "host is unreachable" });
             res.end();
             return;
           }
@@ -62,28 +60,21 @@ app.post("/shorten", (req, res) => {
           });
 
           await newLink.save();
-          //if (cookie) setCookieValue(req, res, { original, shortened });
           res.json({ original, shortened });
         } catch (err) {
-          res.status(500).json({ "error": err });
+          res.status(500).json({ error: err });
           console.error(err);
         }
       } else {
         let { shortened } = doc;
-        //if (cookie) setCookieValue(req, res, { original, shortened });
         res.status(200).json({ original, shortened });
         res.end();
       }
     })
     .catch((err) => {
-      res.status(500).json({ "error": "server error" });
+      res.status(500).json({ error: "server error" });
       console.error(err);
     });
 });
-
-// app.post("/delete", (req, res) => {
-//   const { shortened } = req.body;
-//   deleteCookieValue(req, res, shortened);
-// });
 
 export default app;
